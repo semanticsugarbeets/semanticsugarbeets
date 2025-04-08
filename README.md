@@ -1,7 +1,11 @@
-# SemanticSugarbeets
+# SemanticSugarBeets
 Information and scripts for the SemanticSugarBeets dataset
 
-Comming soon!
+Coming soon!
+
+## Setup
+
+## Usage
 
 ## License
 
