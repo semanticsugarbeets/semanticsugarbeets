@@ -11,12 +11,15 @@ def parse_arguments():
         description='demonstrator for sugar-beet detection, segmentation and mass estimation')
     parser.add_argument('--input_dir', type=str, required=True, help='input image directory')
     parser.add_argument('--results_dir', type=str, required=True, help='directory for storing results')
-    parser.add_argument('--coarse_model', type=str, required=True,
-                        help='path to model providing instance-segmentation results for entire sugar beets')
-    parser.add_argument('--fine_model', type=str, required=True,
-                        help='path to model providing semantic-segmentation results for sugar-beet regions')
-    parser.add_argument('--marker_model', type=str, required=True,
-                        help='path to model providing oriented bounding boxes of reference markers')
+    parser.add_argument('--coarse_model', type=str, default=None,
+                        help='path to model providing instance-segmentation results for entire sugar beets '
+                             '(loads default model if not specified)')
+    parser.add_argument('--fine_model', type=str, default=None,
+                        help='path to model providing semantic-segmentation results for sugar-beet regions '
+                             '(loads default model if not specified)')
+    parser.add_argument('--marker_model', type=str, default=None,
+                        help='path to model providing oriented bounding boxes of reference markers '
+                             '(loads default model if not specified)')
     parser.add_argument('--min_confidence', type=float, default=0.4, help='minimum confidence of coarse-model results')
     parser.add_argument('--image_list', type=str, default=None,
                         help='path to text file containing list of images to be included '

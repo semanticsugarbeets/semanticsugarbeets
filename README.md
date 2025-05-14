@@ -48,7 +48,14 @@ The algorithm relies on trained models for three learning tasks, each designed t
 
 ## Usage
 
-Use the demo application to process a directory of input images and visualize the results. The script requires input, output and model paths:
+Use the demo application to process a directory of input images and visualize the results:
+
+```bash
+python demo.py --input_dir <path_to_input_images> --results_dir <output_directory>
+```
+
+Default models are loaded from the repository if they are not explicitly specified. To run custom models instead, use the following arguments:
+
 ```bash
 python demo.py --input_dir <path_to_input_images> --results_dir <output_directory> \
     --coarse_model <path_to_beet_delineation_model> --fine_model <path_to_semantic_segmentation_model> \

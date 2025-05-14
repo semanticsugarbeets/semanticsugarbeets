@@ -1,3 +1,6 @@
+import os
+from urllib.request import urlopen
+from urllib.error import URLError
 import numpy as np
 import cv2
 from ultralytics import YOLO
@@ -111,23 +114,32 @@ class Detector:
         Additionally, object masses can be estimated based on the detection of reference markers.
     """
 
+    # default model paths
+    MODEL_VERSION = 'v1.0.0'
+    DEFAULT_MODEL_COARSE = 'ssb_coarse_iseg_yolo11s_896.pt'
+    DEFAULT_MODEL_FINE = 'ssb_fine_seg_unet_efficientnet-b0_1024.pt'
+    DEFAULT_MODEL_MARKER = 'ssb_marker_obb_yolo11s_896.pt'
+
     def __init__(self, coarse_model_path: str, fine_model_path: str, marker_model_path: str,
                  mean: tuple[float, float, float], std_dev: tuple[float, float, float], marker_areas: dict[int, float]):
         """Loads the pre-trained models
 
         Args:
-            coarse_model_path (str): path to coarse-grained instance-segmentation model
-            fine_model_path (str): path to fine-grained semantic-segmentation model
-            marker_model_path (str): path to marker-detection model for reference objects
+            coarse_model_path (str): path to coarse-grained instance-segmentation model or None to load default model
+            fine_model_path (str): path to fine-grained semantic-segmentation model or None to load default model
+            marker_model_path (str): path to marker-detection model for reference objects or None to load default model
             mean (tuple[float, float, float]): mean values for color normalization
             std_dev (tuple[float, float, float]): standard-deviation values for color normalization
             marker_areas (dict[int, float]): dictionary mapping marker labels to their absolute areas in mm^2
         """
-        self.coarse_model = YOLO(coarse_model_path)
+        self.coarse_model = YOLO(self.find_model(
+            self.DEFAULT_MODEL_COARSE if coarse_model_path is None else coarse_model_path))
         assert self.coarse_model.model.model[-1].nc == 1, \
             f'Expected 1 class in coarse model, but found {self.coarse_model.model.model[-1].nc} classes.'
-        self.fine_model = FineSegmentation(fine_model_path, mean, std_dev)
-        self.marker_model = None if marker_model_path is None else YOLO(marker_model_path)
+        self.fine_model = FineSegmentation(self.find_model(
+            self.DEFAULT_MODEL_FINE if fine_model_path is None else fine_model_path), mean, std_dev)
+        self.marker_model = YOLO(self.find_model(
+            self.DEFAULT_MODEL_MARKER if marker_model_path is None else marker_model_path))
         self.marker_areas = marker_areas
 
     def apply(self, image: np.array,
@@ -196,3 +208,31 @@ class Detector:
                                   for label, marker_obb in zip(results.cls.tolist(), marker_obbs)
                                   if label in self.marker_areas]), marker_obbs
         return None, []
+
+    def find_model(self, model_path: str) -> str:
+        """Checks if the model file exists locally and downloads it from the repository otherwise
+
+        Args:
+            model_path (str): path to the model file
+
+        Returns:
+            str: valid path to the model file
+            
+        Raises:
+            ValueError: if the model file cannot be found locally or retrieved
+        """
+        if os.path.isfile(model_path):
+            return model_path
+        model_name = os.path.basename(model_path)
+        file_path = os.path.join(os.path.dirname(__file__), 'models', model_name)
+        if not os.path.isfile(file_path):
+            print(f'model {model_name} not found locally - downloading from repository...')
+            try:
+                with urlopen('https://github.com/semanticsugarbeets/semanticsugarbeets/releases/download/'
+                             f'{self.MODEL_VERSION}/{model_name}') as f:
+                    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                    with open(file_path, 'wb') as model_file:
+                        model_file.write(f.read())
+            except URLError as e:
+                raise ValueError(f'cannot find or retrieve model {model_name}') from e
+        return file_path
