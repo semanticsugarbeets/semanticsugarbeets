@@ -1,0 +1,9 @@
+numpy>=1.21.0
+ultralytics>=8.3.76
+opencv-python>=4.5.3
+shapely>=2.0.7
+torch>=1.9.0
+torchvision>=0.10.0
+segmentation_models_pytorch==0.4.0
+efficientnet_pytorch>=0.7.1
+pretrainedmodels>=0.7.4
